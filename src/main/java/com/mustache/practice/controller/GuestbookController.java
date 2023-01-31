@@ -22,7 +22,7 @@ public class GuestbookController {
 
     @GetMapping("/list")
     public PageResultDTO<GuestbookDTO, Guestbook> list(PageRequestDTO pageRequestDTO, Model model) {
-        log.info("list");
+        log.info("list" + pageRequestDTO);
         PageResultDTO<GuestbookDTO, Guestbook> list = guestbookService.getList(pageRequestDTO);
 
         return list;

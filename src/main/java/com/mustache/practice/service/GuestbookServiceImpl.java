@@ -4,7 +4,10 @@ import com.mustache.practice.dto.GuestbookDTO;
 import com.mustache.practice.dto.PageRequestDTO;
 import com.mustache.practice.dto.PageResultDTO;
 import com.mustache.practice.entity.Guestbook;
+import com.mustache.practice.entity.QGuestbook;
 import com.mustache.practice.repository.GuestbookRepository;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -34,6 +37,7 @@ public class GuestbookServiceImpl implements GuestbookService {
         return entity.getId();
     }
 
+
     @Override
     public GuestbookDTO read(Long id) {
 
@@ -61,6 +65,39 @@ public class GuestbookServiceImpl implements GuestbookService {
 
     }
 
+
+    private BooleanBuilder getSearch(PageRequestDTO requestDTO) {
+        String type = requestDTO.getType();
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        QGuestbook qGuestbook = QGuestbook.guestbook;
+        String keyword = requestDTO.getKeyword();
+
+        BooleanExpression expression = qGuestbook.id.gt(0L);
+
+        booleanBuilder.and(expression);
+
+        BooleanBuilder conditionBulider = new BooleanBuilder();
+
+        if (type == null || type.trim()
+                                .length() == 0) {
+            return booleanBuilder;
+        }
+
+        if (type.contains("t")) {
+            conditionBulider.or(qGuestbook.title.contains(keyword));
+        }
+        if (type.contains("c")) {
+            conditionBulider.or(qGuestbook.content.contains(keyword));
+        }
+        if (type.contains("w")) {
+            conditionBulider.or(qGuestbook.writer.contains(keyword));
+        }
+
+        booleanBuilder.and(conditionBulider);
+        return booleanBuilder;
+
+    }
+
     @Override
     public PageResultDTO<GuestbookDTO, Guestbook> getList(PageRequestDTO requestDTO) {
         //GuestbookRepository 에서 해온것 처럼 Pageable 을 구하고
@@ -69,7 +106,9 @@ public class GuestbookServiceImpl implements GuestbookService {
         //함수를 전달한다. entityToDTO 는 GuestbookService 에서 만들어놓은 default 메서드임
         Pageable pageable = requestDTO.getPageable(Sort.by("id")
                                                        .descending());
-        Page<Guestbook> result = guestbookRepository.findAll(pageable);
+        BooleanBuilder booleanBuilder = getSearch(requestDTO);
+
+        Page<Guestbook> result = guestbookRepository.findAll(booleanBuilder, pageable);
 
         Function<Guestbook, GuestbookDTO> fn = (entity) -> entityToDTO(entity);
         return new PageResultDTO<>(result, fn);

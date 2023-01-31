@@ -18,8 +18,10 @@ public class GuestbookServiceImplTest {
     public void pageRequestDTOAndPageResultDTO() {
         PageRequestDTO pageRequestDTO =
                 PageRequestDTO.builder()
-                              .page(11)
+                              .page(1)
                               .size(10)
+                              .type("t")
+                              .keyword("19")
                               .build();
         PageResultDTO<GuestbookDTO, Guestbook> list = service.getList(pageRequestDTO);
 
